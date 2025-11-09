@@ -1,6 +1,6 @@
 """
-Windows端口映射GUI工具
-功能：将本地22端口映射到远程服务器的指定IP和端口
+Windows Port Mapping GUI Tool
+Map remote port to local port
 """
 
 import tkinter as tk
@@ -13,9 +13,10 @@ import sys
 class PortMapApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("端口映射工具")
-        self.root.geometry("600x550")
-        self.root.resizable(False, False)
+        self.root.title("Port Mapper")
+        self.root.geometry("650x600")
+        self.root.resizable(True, True)  # 允许调整大小
+        self.root.minsize(600, 550)  # 设置最小尺寸
         
         # 设置DPI感知以改善字体渲染
         try:
@@ -34,177 +35,190 @@ class PortMapApp:
         self.is_mapped = False
         self.current_remote_ip = None
         self.current_remote_port = None
+        self.current_local_port = None
         
         # 启动时检查现有映射
         self.check_existing_mapping()
     
     def setup_ui(self):
-        """设置用户界面"""
-        # 配置样式
-        style = ttk.Style()
-        style.theme_use('clam')
-        
-        # 配置按钮样式
-        style.configure('Primary.TButton', 
-                       font=('Microsoft YaHei UI', 10),
-                       padding=10)
-        style.configure('Secondary.TButton', 
-                       font=('Microsoft YaHei UI', 10),
-                       padding=10)
-        
-        # 顶部栏 - 深色背景
-        header_frame = tk.Frame(self.root, bg="#2c3e50", height=80)
+        """Setup user interface"""
+        # 顶部栏
+        header_frame = tk.Frame(self.root, bg="#2c3e50", height=90)
         header_frame.pack(fill=tk.X, side=tk.TOP)
         header_frame.pack_propagate(False)
         
-        # 标题和图标
+        # 标题
         title_container = tk.Frame(header_frame, bg="#2c3e50")
         title_container.pack(expand=True)
         
-        # 图标 (使用Unicode符号)
         icon_label = tk.Label(title_container, text="🔗", 
-                             font=("Segoe UI Emoji", 28),
+                             font=("Segoe UI Emoji", 32),
                              bg="#2c3e50", fg="#ffffff")
         icon_label.pack(side=tk.LEFT, padx=(0, 15))
         
-        # 标题文字
         title_frame = tk.Frame(title_container, bg="#2c3e50")
         title_frame.pack(side=tk.LEFT)
         
-        title_label = tk.Label(title_frame, text="端口映射工具", 
-                              font=("Microsoft YaHei UI", 18, "bold"),
+        title_label = tk.Label(title_frame, text="Port Mapper", 
+                              font=("Microsoft YaHei", 20, "bold"),
                               bg="#2c3e50", fg="#ffffff")
         title_label.pack(anchor=tk.W)
         
-        subtitle_label = tk.Label(title_frame, text="Port Mapper - 轻松管理端口转发", 
-                                 font=("Microsoft YaHei UI", 9),
+        subtitle_label = tk.Label(title_frame, text="Windows Port Forwarding Tool", 
+                                 font=("Microsoft YaHei", 11),
                                  bg="#2c3e50", fg="#bdc3c7")
         subtitle_label.pack(anchor=tk.W)
         
         # 主内容区域
         content_frame = tk.Frame(self.root, bg="#f5f6fa")
-        content_frame.pack(fill=tk.BOTH, expand=True, padx=30, pady=25)
+        content_frame.pack(fill=tk.BOTH, expand=True, padx=35, pady=30)
         
-        # 本地端口信息卡片
+        # 信息提示卡片
         info_card = tk.Frame(content_frame, bg="#3498db", relief=tk.FLAT, bd=0)
-        info_card.pack(fill=tk.X, pady=(0, 20))
+        info_card.pack(fill=tk.X, pady=(0, 25))
         
         info_inner = tk.Frame(info_card, bg="#3498db")
-        info_inner.pack(fill=tk.X, padx=20, pady=15)
+        info_inner.pack(fill=tk.X, padx=20, pady=18)
         
         info_icon = tk.Label(info_inner, text="ℹ️", 
-                            font=("Segoe UI Emoji", 16),
+                            font=("Segoe UI Emoji", 18),
                             bg="#3498db", fg="#ffffff")
-        info_icon.pack(side=tk.LEFT, padx=(0, 10))
+        info_icon.pack(side=tk.LEFT, padx=(0, 12))
         
         info_text = tk.Label(info_inner, 
-                            text="本地端口: 22 (SSH)  |  转发至远程服务器", 
-                            font=("Microsoft YaHei UI", 10, "bold"),
+                            text="Mapping: Remote IP:Port → Local Port", 
+                            font=("Microsoft YaHei", 12, "bold"),
                             bg="#3498db", fg="#ffffff")
         info_text.pack(side=tk.LEFT)
         
         # 配置卡片
         config_card = tk.Frame(content_frame, bg="#ffffff", relief=tk.FLAT, bd=0)
-        config_card.pack(fill=tk.X, pady=(0, 20))
+        config_card.pack(fill=tk.X, pady=(0, 25))
         
-        # 添加阴影效果 (通过边框模拟)
         shadow_frame = tk.Frame(content_frame, bg="#dfe6e9", relief=tk.FLAT)
         shadow_frame.place(in_=config_card, x=3, y=3, relwidth=1, relheight=1)
         config_card.lift()
         
         config_inner = tk.Frame(config_card, bg="#ffffff")
-        config_inner.pack(fill=tk.X, padx=25, pady=20)
+        config_inner.pack(fill=tk.X, padx=30, pady=25)
         
         # 远程IP地址
         ip_frame = tk.Frame(config_inner, bg="#ffffff")
-        ip_frame.pack(fill=tk.X, pady=(0, 15))
+        ip_frame.pack(fill=tk.X, pady=(0, 18))
         
         ip_label_frame = tk.Frame(ip_frame, bg="#ffffff")
-        ip_label_frame.pack(fill=tk.X, pady=(0, 5))
+        ip_label_frame.pack(fill=tk.X, pady=(0, 8))
         
         ip_icon = tk.Label(ip_label_frame, text="🌐", 
-                          font=("Segoe UI Emoji", 12),
+                          font=("Segoe UI Emoji", 14),
                           bg="#ffffff")
-        ip_icon.pack(side=tk.LEFT, padx=(0, 5))
+        ip_icon.pack(side=tk.LEFT, padx=(0, 8))
         
-        ip_label = tk.Label(ip_label_frame, text="远程IP地址", 
-                           font=("Microsoft YaHei UI", 10, "bold"),
+        ip_label = tk.Label(ip_label_frame, text="Remote IP Address", 
+                           font=("Microsoft YaHei", 11, "bold"),
                            bg="#ffffff", fg="#2c3e50")
         ip_label.pack(side=tk.LEFT)
         
         self.remote_ip_entry = tk.Entry(ip_frame, 
-                                        font=("Consolas", 11),
+                                        font=("Microsoft YaHei", 11),
                                         relief=tk.FLAT, 
                                         bg="#ecf0f1",
                                         fg="#2c3e50",
                                         insertbackground="#3498db")
-        self.remote_ip_entry.pack(fill=tk.X, ipady=8, ipadx=10)
+        self.remote_ip_entry.pack(fill=tk.X, ipady=10, ipadx=12)
         self.remote_ip_entry.insert(0, "192.168.1.100")
         self.remote_ip_entry.bind("<FocusIn>", lambda e: self.on_entry_focus(e, True))
         self.remote_ip_entry.bind("<FocusOut>", lambda e: self.on_entry_focus(e, False))
         
         # 远程端口
-        port_frame = tk.Frame(config_inner, bg="#ffffff")
-        port_frame.pack(fill=tk.X, pady=(0, 5))
+        remote_port_frame = tk.Frame(config_inner, bg="#ffffff")
+        remote_port_frame.pack(fill=tk.X, pady=(0, 18))
         
-        port_label_frame = tk.Frame(port_frame, bg="#ffffff")
-        port_label_frame.pack(fill=tk.X, pady=(0, 5))
+        remote_port_label_frame = tk.Frame(remote_port_frame, bg="#ffffff")
+        remote_port_label_frame.pack(fill=tk.X, pady=(0, 8))
         
-        port_icon = tk.Label(port_label_frame, text="🔌", 
-                            font=("Segoe UI Emoji", 12),
-                            bg="#ffffff")
-        port_icon.pack(side=tk.LEFT, padx=(0, 5))
+        remote_port_icon = tk.Label(remote_port_label_frame, text="🔌", 
+                                    font=("Segoe UI Emoji", 14),
+                                    bg="#ffffff")
+        remote_port_icon.pack(side=tk.LEFT, padx=(0, 8))
         
-        port_label = tk.Label(port_label_frame, text="远程端口", 
-                             font=("Microsoft YaHei UI", 10, "bold"),
-                             bg="#ffffff", fg="#2c3e50")
-        port_label.pack(side=tk.LEFT)
+        remote_port_label = tk.Label(remote_port_label_frame, text="Remote Port", 
+                                     font=("Microsoft YaHei", 11, "bold"),
+                                     bg="#ffffff", fg="#2c3e50")
+        remote_port_label.pack(side=tk.LEFT)
         
-        self.remote_port_entry = tk.Entry(port_frame, 
-                                          font=("Consolas", 11),
+        self.remote_port_entry = tk.Entry(remote_port_frame, 
+                                          font=("Microsoft YaHei", 11),
                                           relief=tk.FLAT,
                                           bg="#ecf0f1",
                                           fg="#2c3e50",
                                           insertbackground="#3498db")
-        self.remote_port_entry.pack(fill=tk.X, ipady=8, ipadx=10)
-        self.remote_port_entry.insert(0, "22")
+        self.remote_port_entry.pack(fill=tk.X, ipady=10, ipadx=12)
+        self.remote_port_entry.insert(0, "2222")
         self.remote_port_entry.bind("<FocusIn>", lambda e: self.on_entry_focus(e, True))
         self.remote_port_entry.bind("<FocusOut>", lambda e: self.on_entry_focus(e, False))
         
+        # 本地端口
+        local_port_frame = tk.Frame(config_inner, bg="#ffffff")
+        local_port_frame.pack(fill=tk.X, pady=(0, 8))
+        
+        local_port_label_frame = tk.Frame(local_port_frame, bg="#ffffff")
+        local_port_label_frame.pack(fill=tk.X, pady=(0, 8))
+        
+        local_port_icon = tk.Label(local_port_label_frame, text="🏠", 
+                                   font=("Segoe UI Emoji", 14),
+                                   bg="#ffffff")
+        local_port_icon.pack(side=tk.LEFT, padx=(0, 8))
+        
+        local_port_label = tk.Label(local_port_label_frame, text="Local Port", 
+                                    font=("Microsoft YaHei", 11, "bold"),
+                                    bg="#ffffff", fg="#2c3e50")
+        local_port_label.pack(side=tk.LEFT)
+        
+        self.local_port_entry = tk.Entry(local_port_frame, 
+                                         font=("Microsoft YaHei", 11),
+                                         relief=tk.FLAT,
+                                         bg="#ecf0f1",
+                                         fg="#2c3e50",
+                                         insertbackground="#3498db")
+        self.local_port_entry.pack(fill=tk.X, ipady=10, ipadx=12)
+        self.local_port_entry.insert(0, "22")
+        self.local_port_entry.bind("<FocusIn>", lambda e: self.on_entry_focus(e, True))
+        self.local_port_entry.bind("<FocusOut>", lambda e: self.on_entry_focus(e, False))
+        
         # 按钮区域
         button_container = tk.Frame(content_frame, bg="#f5f6fa")
-        button_container.pack(fill=tk.X, pady=(0, 20))
+        button_container.pack(fill=tk.X, pady=(0, 25))
         
-        # 创建自定义按钮
         self.map_button = self.create_button(
-            button_container, "▶ 创建映射", "#27ae60", self.create_mapping
+            button_container, "▶ Create Mapping", "#27ae60", self.create_mapping
         )
-        self.map_button.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(0, 8))
+        self.map_button.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(0, 10))
         
         self.unmap_button = self.create_button(
-            button_container, "⏹ 删除映射", "#e74c3c", self.delete_mapping
+            button_container, "⏹ Delete Mapping", "#e74c3c", self.delete_mapping
         )
-        self.unmap_button.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(8, 8))
+        self.unmap_button.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(10, 10))
         
         self.refresh_button = self.create_button(
-            button_container, "🔄 刷新", "#95a5a6", self.check_existing_mapping
+            button_container, "🔄 Refresh", "#95a5a6", self.check_existing_mapping
         )
-        self.refresh_button.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(8, 0))
+        self.refresh_button.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(10, 0))
         
         # 状态卡片
         status_card = tk.Frame(content_frame, bg="#ffffff", relief=tk.FLAT)
-        status_card.pack(fill=tk.X, pady=(0, 15))
+        status_card.pack(fill=tk.X, pady=(0, 20))
         
         status_inner = tk.Frame(status_card, bg="#ffffff")
-        status_inner.pack(fill=tk.X, padx=20, pady=15)
+        status_inner.pack(fill=tk.X, padx=25, pady=18)
         
         status_icon_label = tk.Label(status_inner, text="📊", 
-                                     font=("Segoe UI Emoji", 14),
+                                     font=("Segoe UI Emoji", 16),
                                      bg="#ffffff")
-        status_icon_label.pack(side=tk.LEFT, padx=(0, 10))
+        status_icon_label.pack(side=tk.LEFT, padx=(0, 12))
         
-        self.status_label = tk.Label(status_inner, text="状态: 未映射", 
-                                    font=("Microsoft YaHei UI", 11, "bold"),
+        self.status_label = tk.Label(status_inner, text="Status: Not Mapped", 
+                                    font=("Microsoft YaHei", 12, "bold"),
                                     bg="#ffffff", fg="#95a5a6")
         self.status_label.pack(side=tk.LEFT)
         
@@ -215,41 +229,38 @@ class PortMapApp:
         log_header = tk.Frame(log_card, bg="#ecf0f1")
         log_header.pack(fill=tk.X)
         
-        log_title = tk.Label(log_header, text="📝 日志信息", 
-                            font=("Microsoft YaHei UI", 9, "bold"),
+        log_title = tk.Label(log_header, text="📝 Log Messages", 
+                            font=("Microsoft YaHei", 10, "bold"),
                             bg="#ecf0f1", fg="#7f8c8d")
-        log_title.pack(anchor=tk.W, padx=15, pady=8)
+        log_title.pack(anchor=tk.W, padx=18, pady=10)
         
         log_content = tk.Frame(log_card, bg="#ffffff")
-        log_content.pack(fill=tk.BOTH, expand=True, padx=15, pady=(0, 15))
+        log_content.pack(fill=tk.BOTH, expand=True, padx=18, pady=(0, 18))
         
         self.log_text = tk.Text(log_content, height=6, 
-                               font=("Consolas", 9), 
+                               font=("Microsoft YaHei", 10), 
                                wrap=tk.WORD,
                                bg="#fafafa", 
                                fg="#2c3e50",
                                relief=tk.FLAT, 
                                borderwidth=0,
-                               padx=10, 
-                               pady=10)
+                               padx=12, 
+                               pady=12)
         self.log_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         
-        # 滚动条
         scrollbar = ttk.Scrollbar(log_content, orient=tk.VERTICAL, command=self.log_text.yview)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.log_text.config(yscrollcommand=scrollbar.set)
-        
-        # 使日志文本框只读
         self.log_text.config(state=tk.DISABLED)
         
         # 底部提示
-        footer_frame = tk.Frame(self.root, bg="#34495e", height=35)
+        footer_frame = tk.Frame(self.root, bg="#34495e", height=38)
         footer_frame.pack(fill=tk.X, side=tk.BOTTOM)
         footer_frame.pack_propagate(False)
         
         tip_label = tk.Label(footer_frame, 
-                            text="⚠ 需要管理员权限运行  |  Windows 端口转发工具  |  v1.1", 
-                            font=("Microsoft YaHei UI", 8),
+                            text="⚠ Requires Administrator Privileges  |  Windows Port Forwarding Tool  |  v1.1", 
+                            font=("Microsoft YaHei", 9),
                             bg="#34495e", fg="#bdc3c7")
         tip_label.pack(expand=True)
     
@@ -257,14 +268,14 @@ class PortMapApp:
         """创建自定义样式的按钮"""
         button = tk.Button(parent, 
                           text=text,
-                          font=("Microsoft YaHei UI", 10, "bold"),
+                          font=("Microsoft YaHei", 11, "bold"),
                           bg=color,
                           fg="#ffffff",
                           relief=tk.FLAT,
                           cursor="hand2",
                           command=command,
                           padx=20,
-                          pady=12,
+                          pady=14,
                           activebackground=self.darken_color(color),
                           activeforeground="#ffffff",
                           borderwidth=0)
@@ -332,94 +343,106 @@ class PortMapApp:
             return False
     
     def check_existing_mapping(self):
-        """检查现有的端口映射"""
+        """Check existing port mappings"""
         try:
-            self.log("正在检查现有映射...")
+            self.log("Checking existing mappings...")
             result = subprocess.run(
                 ["netsh", "interface", "portproxy", "show", "all"],
                 capture_output=True,
                 text=True,
                 encoding='gbk',
-                errors='ignore'  # 忽略编码错误
+                errors='ignore'
             )
             
             if result.returncode == 0:
                 output = result.stdout
-                if output:  # 确保输出不为空
-                    # 查找本地端口22的映射
+                if output:
+                    # Find connections forwarding to local port (connectaddress=127.0.0.1)
                     lines = output.split('\n')
                     for i, line in enumerate(lines):
-                        if line and '22' in line and '0.0.0.0' in line:
-                            # 尝试解析映射信息
+                        if line and '127.0.0.1' in line:
+                            # Try to parse mapping info
                             parts = line.split()
                             if len(parts) >= 4:
-                                self.current_remote_ip = parts[2]
-                                self.current_remote_port = parts[3]
+                                # parts[0]=listen address, parts[1]=listen port
+                                # parts[2]=connect address, parts[3]=connect port
+                                self.current_remote_ip = parts[0]
+                                self.current_remote_port = parts[1]
+                                self.current_local_port = parts[3]
                                 self.is_mapped = True
                                 self.status_label.config(
-                                    text=f"状态: 已映射 -> {self.current_remote_ip}:{self.current_remote_port}",
+                                    text=f"Status: Mapped {self.current_remote_ip}:{self.current_remote_port} → Local:{self.current_local_port}",
                                     fg="#27ae60"
                                 )
-                                self.log(f"发现现有映射: 本地22 -> {self.current_remote_ip}:{self.current_remote_port}")
+                                self.log(f"Found existing mapping: {self.current_remote_ip}:{self.current_remote_port} → Local:{self.current_local_port}")
                                 return
                 
-                # 没有找到映射
+                # No mapping found
                 self.is_mapped = False
-                self.status_label.config(text="状态: 未映射", fg="#95a5a6")
-                self.log("未发现现有映射")
+                self.status_label.config(text="Status: Not Mapped", fg="#95a5a6")
+                self.log("No existing mapping found")
             else:
-                error_msg = result.stderr if result.stderr else "未知错误"
-                self.log(f"检查失败: {error_msg}")
+                error_msg = result.stderr if result.stderr else "Unknown error"
+                self.log(f"Check failed: {error_msg}")
         except Exception as e:
-            self.log(f"检查映射时出错: {str(e)}")
-            # 即使出错，也设置为未映射状态
+            self.log(f"Error checking mapping: {str(e)}")
+            # Set to not mapped state even on error
             self.is_mapped = False
-            self.status_label.config(text="状态: 未映射", fg="#95a5a6")
+            self.status_label.config(text="Status: Not Mapped", fg="#95a5a6")
     
     def create_mapping(self):
-        """创建端口映射"""
+        """Create port mapping"""
         remote_ip = self.remote_ip_entry.get().strip()
         remote_port = self.remote_port_entry.get().strip()
+        local_port = self.local_port_entry.get().strip()
         
-        # 验证输入
+        # Validate input
         if not remote_ip:
-            messagebox.showerror("错误", "请输入远程IP地址")
+            messagebox.showerror("Error", "Please enter remote IP address")
             return
         
         if not remote_port:
-            messagebox.showerror("错误", "请输入远程端口")
+            messagebox.showerror("Error", "Please enter remote port")
+            return
+        
+        if not local_port:
+            messagebox.showerror("Error", "Please enter local port")
             return
         
         if not self.validate_ip(remote_ip):
-            messagebox.showerror("错误", "IP地址格式不正确")
+            messagebox.showerror("Error", "Invalid IP address format")
             return
         
         if not self.validate_port(remote_port):
-            messagebox.showerror("错误", "端口号必须在1-65535之间")
+            messagebox.showerror("Error", "Port number must be between 1-65535")
             return
         
-        # 检查管理员权限
+        if not self.validate_port(local_port):
+            messagebox.showerror("Error", "Local port must be between 1-65535")
+            return
+        
+        # Check admin privileges
         if not self.check_admin():
-            messagebox.showerror("权限不足", 
-                               "本程序需要管理员权限才能创建端口映射\n请右键以管理员身份运行")
-            self.log("错误: 需要管理员权限")
+            messagebox.showerror("Permission Denied", 
+                               "This program requires administrator privileges\nPlease run as administrator")
+            self.log("Error: Administrator privileges required")
             return
         
-        # 如果已存在映射，先删除
+        # Delete existing mapping if any
         if self.is_mapped:
-            self.log("检测到现有映射，先删除...")
+            self.log("Existing mapping detected, removing...")
             self.delete_mapping(silent=True)
         
         try:
-            self.log(f"正在创建映射: 本地22 -> {remote_ip}:{remote_port}")
+            self.log(f"Creating mapping: {remote_ip}:{remote_port} → Local:{local_port}")
             
-            # 使用netsh创建端口转发
+            # Use netsh to create port forwarding (remote → local)
             cmd = [
                 "netsh", "interface", "portproxy", "add", "v4tov4",
-                "listenport=22",
-                "listenaddress=0.0.0.0",
-                f"connectport={remote_port}",
-                f"connectaddress={remote_ip}"
+                f"listenport={remote_port}",
+                f"listenaddress={remote_ip}",
+                f"connectport={local_port}",
+                "connectaddress=127.0.0.1"
             ]
             
             result = subprocess.run(cmd, capture_output=True, text=True, encoding='gbk', errors='ignore')
@@ -428,39 +451,48 @@ class PortMapApp:
                 self.is_mapped = True
                 self.current_remote_ip = remote_ip
                 self.current_remote_port = remote_port
+                self.current_local_port = local_port
                 self.status_label.config(
-                    text=f"状态: 已映射 -> {remote_ip}:{remote_port}",
+                    text=f"Status: Mapped {remote_ip}:{remote_port} → Local:{local_port}",
                     fg="#27ae60"
                 )
-                self.log("映射创建成功!")
-                messagebox.showinfo("成功", f"端口映射创建成功!\n本地22 -> {remote_ip}:{remote_port}")
+                self.log("Mapping created successfully!")
+                messagebox.showinfo("Success", f"Port mapping created!\n{remote_ip}:{remote_port} → Local:{local_port}")
             else:
-                error_msg = result.stderr if result.stderr else "未知错误"
-                self.log(f"映射创建失败: {error_msg}")
-                messagebox.showerror("错误", f"映射创建失败:\n{error_msg}")
+                error_msg = result.stderr if result.stderr else "Unknown error"
+                self.log(f"Failed to create mapping: {error_msg}")
+                messagebox.showerror("Error", f"Failed to create mapping:\n{error_msg}")
         
         except Exception as e:
-            self.log(f"创建映射时出错: {str(e)}")
-            messagebox.showerror("错误", f"创建映射时出错:\n{str(e)}")
+            self.log(f"Error creating mapping: {str(e)}")
+            messagebox.showerror("Error", f"Error creating mapping:\n{str(e)}")
     
     def delete_mapping(self, silent=False):
-        """删除端口映射"""
-        # 检查管理员权限
+        """Delete port mapping"""
+        # Check admin privileges
         if not self.check_admin():
             if not silent:
-                messagebox.showerror("权限不足", 
-                                   "本程序需要管理员权限才能删除端口映射\n请右键以管理员身份运行")
-            self.log("错误: 需要管理员权限")
+                messagebox.showerror("Permission Denied", 
+                                   "This program requires administrator privileges\nPlease run as administrator")
+            self.log("Error: Administrator privileges required")
             return
         
         try:
-            self.log("正在删除端口映射...")
+            self.log("Deleting port mapping...")
             
-            cmd = [
-                "netsh", "interface", "portproxy", "delete", "v4tov4",
-                "listenport=22",
-                "listenaddress=0.0.0.0"
-            ]
+            # Need to know the original listen port and address
+            if self.current_remote_ip and self.current_remote_port:
+                cmd = [
+                    "netsh", "interface", "portproxy", "delete", "v4tov4",
+                    f"listenport={self.current_remote_port}",
+                    f"listenaddress={self.current_remote_ip}"
+                ]
+            else:
+                # If no specific info available
+                self.log("Warning: Cannot determine mapping details")
+                if not silent:
+                    messagebox.showwarning("Warning", "Cannot determine mapping information, please delete manually")
+                return
             
             result = subprocess.run(cmd, capture_output=True, text=True, encoding='gbk', errors='ignore')
             
@@ -468,20 +500,21 @@ class PortMapApp:
                 self.is_mapped = False
                 self.current_remote_ip = None
                 self.current_remote_port = None
-                self.status_label.config(text="状态: 未映射", fg="#95a5a6")
-                self.log("映射删除成功!")
+                self.current_local_port = None
+                self.status_label.config(text="Status: Not Mapped", fg="#95a5a6")
+                self.log("Mapping deleted successfully!")
                 if not silent:
-                    messagebox.showinfo("成功", "端口映射已删除")
+                    messagebox.showinfo("Success", "Port mapping deleted")
             else:
-                error_msg = result.stderr if result.stderr else "未知错误"
-                self.log(f"删除映射失败: {error_msg}")
+                error_msg = result.stderr if result.stderr else "Unknown error"
+                self.log(f"Failed to delete mapping: {error_msg}")
                 if not silent:
-                    messagebox.showerror("错误", f"删除映射失败:\n{error_msg}")
+                    messagebox.showerror("Error", f"Failed to delete mapping:\n{error_msg}")
         
         except Exception as e:
-            self.log(f"删除映射时出错: {str(e)}")
+            self.log(f"Error deleting mapping: {str(e)}")
             if not silent:
-                messagebox.showerror("错误", f"删除映射时出错:\n{str(e)}")
+                messagebox.showerror("Error", f"Error deleting mapping:\n{str(e)}")
 
 
 def main():

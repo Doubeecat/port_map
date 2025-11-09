@@ -1,0 +1,86 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # 当推送 v1.0.0 这样的标签时触发
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+      
+    - name: 设置 Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        
+    - name: 安装依赖
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller
+        
+    - name: 构建 exe
+      run: |
+        pyinstaller --onefile --windowed --name port_map --clean port_map.py
+        
+    - name: 获取版本号
+      id: get_version
+      shell: bash
+      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+      
+    - name: 创建 Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: 端口映射工具 ${{ steps.get_version.outputs.VERSION }}
+        body: |
+          ## 端口映射工具 ${{ steps.get_version.outputs.VERSION }}
+          
+          ### 功能特点
+          - 🖥️ 现代化图形用户界面，可调整窗口大小
+          - 🔄 一键创建/删除端口映射
+          - ✅ 自动验证IP地址和端口格式
+          - 📊 实时状态显示和日志记录（带滚动条）
+          - 🔍 自动检测现有映射
+          - 💡 将远程端口映射到本地22端口
+          
+          ### 映射说明
+          **映射方向**: 远程IP:端口 → 本地127.0.0.1:22
+          
+          例如：将 192.168.1.100:2222 映射到本地22端口
+          
+          ### 使用方法
+          1. 下载 `port_map.exe`
+          2. 右键选择"以管理员身份运行"
+          3. 输入远程IP地址和端口
+          4. 点击"创建映射"按钮
+          
+          ### 系统要求
+          - Windows 7/8/10/11
+          - 管理员权限
+          
+          ### 注意事项
+          ⚠️ 本程序必须以管理员身份运行才能创建端口映射
+          
+          ---
+          
+          完整文档请查看 [README.md](https://github.com/${{ github.repository }}/blob/main/README.md)
+        draft: false
+        prerelease: false
+        
+    - name: 上传 Release 资源
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./dist/port_map.exe
+        asset_name: port_map.exe
+        asset_content_type: application/octet-stream

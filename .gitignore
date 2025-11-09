@@ -1,2 +1,31 @@
-build
-dist
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# PyInstaller
+build/
+dist/
+*.spec
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+
+# Release scripts and guides (不需要提交)
+QUICK_RELEASE.md
+RELEASE_GUIDE.md
+release.bat
+init_git.bat
